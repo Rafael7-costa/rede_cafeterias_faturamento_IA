@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Análise de Faturamento — Rede de Cafeterias</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500;1,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --bg:#0c0a08;
+    --bg-card:#151009;
+    --bg-card-2:#181209;
+    --border:rgba(217,175,110,0.14);
+    --border-soft:rgba(217,175,110,0.08);
+    --ink:#f1e8d8;
+    --ink-soft:#9c9184;
+    --ink-dim:#6f665b;
+    --gold:#d9af6e;
+    --gold-bright:#e8c383;
+    --green:#7fb896;
+    --blue:#84a8d6;
+    --red:#c9836f;
+    --olive:#b0ac6e;
+    --serif:'Playfair Display', Georgia, serif;
+    --mono:'IBM Plex Mono', ui-monospace, monospace;
+    --sans:'Inter', system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    padding:64px 48px 48px;
+    background:
+      radial-gradient(ellipse 900px 400px at 15% 0%, rgba(217,175,110,0.10), transparent 60%),
+      radial-gradient(ellipse 700px 500px at 90% 10%, rgba(127,168,214,0.06), transparent 60%);
+    border-bottom:1px solid var(--border);
+    overflow:hidden;
+  }
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11.5px;
+    letter-spacing:.22em;
+    color:var(--gold);
+    text-transform:uppercase;
+    margin-bottom:22px;
+  }
+  .hero-grid{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    gap:24px;
+    flex-wrap:wrap;
+  }
+  .hero-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(34px, 5vw, 54px);
+    line-height:1.08;
+    margin:0;
+    color:var(--ink);
+    letter-spacing:-.01em;
+  }
+  .hero-title em{
+    font-style:italic;
+    font-weight:500;
+    background:linear-gradient(90deg, var(--gold-bright), var(--gold));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .hero-stats{
+    font-family:var(--mono);
+    font-size:13px;
+    color:var(--ink-soft);
+    text-align:right;
+    line-height:2.1;
+    white-space:nowrap;
+  }
+  .hero-stats b{color:var(--ink); font-weight:600;}
+
+  /* ===== LAYOUT ===== */
+  main{max-width:1180px; margin:0 auto; padding:0 48px 90px;}
+
+  .block{margin-top:64px;}
+  .block-head{
+    display:flex;
+    align-items:baseline;
+    gap:16px;
+    padding-top:56px;
+    margin-bottom:10px;
+  }
+  .block-num{
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+    letter-spacing:.1em;
+    flex-shrink:0;
+  }
+  .block-head h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:26px;
+    line-height:1.3;
+    margin:0;
+    color:var(--ink);
+  }
+  .block-sub{
+    font-family:var(--sans);
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:0 0 22px;
+    max-width:640px;
+    line-height:1.6;
+  }
+  .block-rule{
+    border:none;
+    border-top:1px solid var(--border);
+    margin:0 0 28px;
+  }
+
+  /* ===== STAT CARDS (block 1) ===== */
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(5, 1fr);
+    border:1px solid var(--border);
+    border-radius:2px;
+    overflow:hidden;
+  }
+  .stat-card{
+    background:var(--bg-card);
+    padding:26px 22px 22px;
+    border-right:1px solid var(--border-soft);
+    position:relative;
+  }
+  .stat-card:last-child{border-right:none;}
+  .stat-card::after{
+    content:'';
+    position:absolute; left:0; right:0; bottom:0;
+    height:3px;
+  }
+  .stat-card.u-green::after{background:var(--green);}
+  .stat-card.u-gold::after{background:var(--gold);}
+  .stat-card.u-blue::after{background:var(--blue);}
+  .stat-card.u-olive::after{background:var(--olive);}
+  .stat-card.u-red::after{background:var(--red);}
+  .stat-label{
+    font-family:var(--mono);
+    font-size:10px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:14px;
+  }
+  .stat-value{
+    font-family:var(--serif);
+    font-size:28px;
+    font-weight:600;
+    margin-bottom:6px;
+  }
+  .stat-value.green{color:var(--green);}
+  .stat-value.gold{color:var(--gold-bright);}
+  .stat-value.blue{color:var(--blue);}
+  .stat-value.olive{color:var(--olive);}
+  .stat-value.plain{color:var(--ink);}
+  .stat-foot{font-size:12px; color:var(--ink-soft); line-height:1.4;}
+
+  @media (max-width:1000px){ .stat-grid{grid-template-columns:repeat(3,1fr);} }
+  @media (max-width:640px){
+    .stat-grid{grid-template-columns:repeat(2,1fr);}
+    .hero{padding:44px 22px 36px;}
+    main{padding:0 22px 70px;}
+    .hero-stats{text-align:left; white-space:normal;}
+    .stat-card{border-right:none; border-bottom:1px solid var(--border-soft);}
+  }
+
+  /* ===== GENERIC CARD ===== */
+  .panel{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-radius:2px;
+    padding:26px 28px;
+  }
+  .panel + .panel{margin-top:18px;}
+  .panel h3{
+    font-family:var(--serif);
+    font-size:16px;
+    font-weight:600;
+    margin:0 0 4px;
+    color:var(--ink);
+  }
+  .panel .note{
+    font-size:12.5px;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+    line-height:1.55;
+  }
+  .chart-wrap{height:220px;}
+  .chart-wrap.tall{height:260px;}
+  .chart-wrap.xl{height:380px;}
+
+  .row-2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .row-3{display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;}
+  @media (max-width:900px){ .row-2, .row-3{grid-template-columns:1fr;} }
+
+  .callout{
+    border-left:2px solid var(--gold);
+    background:rgba(217,175,110,0.06);
+    padding:12px 18px;
+    font-size:13px;
+    line-height:1.6;
+    color:var(--ink-soft);
+    margin-top:16px;
+  }
+  .callout b{color:var(--ink);}
+  .callout.warn{border-left-color:var(--red); background:rgba(201,131,111,0.06);}
+
+  .panel-title{
+    font-family:var(--serif);
+    font-size:15px;
+    font-weight:600;
+    color:var(--ink);
+    margin-bottom:3px;
+  }
+  .panel-share{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--ink-dim);
+    margin-bottom:14px;
+    letter-spacing:.02em;
+  }
+
+  /* ===== ACTIONS (block 4) ===== */
+  .actions{display:flex; flex-direction:column; gap:14px;}
+  .action-card{
+    background:var(--bg-card);
+    border:1px solid var(--border);
+    border-left:2px solid var(--green);
+    padding:22px 26px;
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+  }
+  .action-card.medium{border-left-color:var(--gold);}
+  .action-rank{
+    font-family:var(--serif);
+    font-style:italic;
+    font-size:26px;
+    color:var(--ink-dim);
+    min-width:34px;
+  }
+  .action-body h4{
+    font-family:var(--serif);
+    font-size:16px;
+    font-weight:600;
+    margin:0 0 6px;
+    color:var(--ink);
+  }
+  .action-body p{margin:0 0 10px; font-size:13px; color:var(--ink-soft); line-height:1.6;}
+  .action-tags{display:flex; gap:10px; flex-wrap:wrap;}
+  .tag{
+    font-family:var(--mono);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    padding:4px 10px;
+    border:1px solid var(--border);
+    color:var(--green);
+  }
+  .tag.medium{color:var(--gold);}
+  .tag.based{color:var(--ink-dim);}
+
+  footer{
+    text-align:center;
+    padding:30px;
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.08em;
+    color:var(--ink-dim);
+    border-top:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="eyebrow">Gerência de Operações · Jan–Jun 2023</div>
+  <div class="hero-grid">
+    <h1 class="hero-title">Análise de <em>Faturamento</em><br>Rede de Cafeterias</h1>
+    <div class="hero-stats">
+      <div><b>149.116</b> transações</div>
+      <div><b>3</b> lojas · <b>6</b> meses</div>
+      <div>Total <b>R$ 698.812</b></div>
+    </div>
+  </div>
+</div>
+
+<main>
+
+  <!-- ===================== BLOCO 1 ===================== -->
+  <div class="block">
+    <div class="block-head"><span class="block-num">01</span><h2>Visão Geral</h2></div>
+    <hr class="block-rule">
+
+    <div class="stat-grid">
+      <div class="stat-card u-green">
+        <div class="stat-label">Faturamento total</div>
+        <div class="stat-value green">R$ 698k</div>
+        <div class="stat-foot">Jan–Jun 2023</div>
+      </div>
+      <div class="stat-card u-gold">
+        <div class="stat-label">Crescimento Jan→Jun</div>
+        <div class="stat-value gold">+104%</div>
+        <div class="stat-foot">R$ 81,7k → R$ 166,5k</div>
+      </div>
+      <div class="stat-card u-olive">
+        <div class="stat-label">Ticket médio</div>
+        <div class="stat-value olive">R$ 4,69</div>
+        <div class="stat-foot">Estável no período</div>
+      </div>
+      <div class="stat-card u-blue">
+        <div class="stat-label">Transações em Junho</div>
+        <div class="stat-value blue">35.352</div>
+        <div class="stat-foot">vs 17.314 em Janeiro</div>
+      </div>
+      <div class="stat-card u-red">
+        <div class="stat-label">Horário de pico</div>
+        <div class="stat-value plain">7h–10h</div>
+        <div class="stat-foot">45,8% do fat. diário</div>
+      </div>
+    </div>
+
+    <div class="panel" style="margin-top:18px;">
+      <h3>Faturamento mensal</h3>
+      <p class="note">Trajetória absoluta de receita, mês a mês.</p>
+      <div class="chart-wrap xl"><canvas id="chart-ov-rev"></canvas></div>
+      <div class="callout">
+        <b>Leitura rápida:</b> o faturamento saiu de R$ 81,7k em Janeiro para R$ 166,5k em Junho — um crescimento de
+        <b>+104%</b> no semestre. A trajetória é consistentemente ascendente a partir de Março, com uma única
+        exceção: a queda pontual de Fevereiro (ver Bloco 02).
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BLOCO 2 ===================== -->
+  <div class="block">
+    <div class="block-head"><span class="block-num">02</span><h2>Decomposição do Crescimento</h2></div>
+    <p class="block-sub">Volume de transações vs. ticket médio, e normalização do efeito de Fevereiro</p>
+    <hr class="block-rule">
+
+    <div class="panel">
+      <div class="row-2">
+        <div>
+          <h3>Volume vs. ticket médio</h3>
+          <p class="note">Separa o crescimento em duas alavancas possíveis.</p>
+          <div class="chart-wrap"><canvas id="chart-dec-combo"></canvas></div>
+        </div>
+        <div>
+          <h3>Contribuição de cada alavanca</h3>
+          <p class="note">% do crescimento explicado por cada uma, Jan → Jun.</p>
+          <div class="chart-wrap"><canvas id="chart-dec-bar"></canvas></div>
+        </div>
+      </div>
+      <div class="callout">
+        <b>Volume explica praticamente 100% do crescimento (+104,2%)</b> — o ticket médio ficou estável, variando
+        apenas <b>-0,2%</b> no semestre (R$ 4,72 → R$ 4,71). A rede cresce por atender mais clientes, não por
+        vender mais caro ao mesmo cliente.
+      </div>
+      <div class="callout warn">
+        <b>Normalização de Fevereiro:</b> Fevereiro caiu -6,8% vs. Janeiro — provável sazonalidade de baixo movimento.
+        Recalculando o crescimento com Março como base (sem a distorção de Fev), o avanço até Junho é de
+        <b>+68,4%</b> em vez de +103,8%. Ainda assim uma tendência forte, mas sem o "efeito degrau" artificial
+        da base de Janeiro. Recomenda-se usar Março como baseline em comparações futuras.
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BLOCO 3 ===================== -->
+  <div class="block">
+    <div class="block-head"><span class="block-num">03</span><h2>Alavancas por Dimensão</h2></div>
+    <p class="block-sub">Contribuição de loja, faixa horária e categoria para o crescimento total do período</p>
+    <hr class="block-rule">
+
+    <div class="row-3">
+      <div class="panel">
+        <div class="panel-title">Por loja</div>
+        <div class="panel-share">CRESCIMENTO QUASE IDÊNTICO ENTRE UNIDADES</div>
+        <div class="chart-wrap tall"><canvas id="chart-store"></canvas></div>
+        <p class="note" style="margin-top:12px;">
+          Hell's Kitchen +104,7% · Lower Manhattan +105,1% · Astoria +101,7%. Cada loja contribui quase
+          igualmente para o crescimento total (~33% cada).
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Por faixa horária</div>
+        <div class="panel-share">PICO DOMINA A RECEITA, MAS CRESCE MAIS DEVAGAR</div>
+        <div class="chart-wrap tall"><canvas id="chart-hour"></canvas></div>
+        <p class="note" style="margin-top:12px;">
+          Pico manhã (7h–10h) = 45,8% da receita, mas cresceu só +97,7% — abaixo da média. Almoço e baixa
+          demanda cresceram mais rápido (+111% e +114%).
+        </p>
+      </div>
+
+      <div class="panel">
+        <div class="panel-title">Por categoria</div>
+        <div class="panel-share">COFFEE E TEA PUXAM 67% DO CRESCIMENTO</div>
+        <div class="chart-wrap tall"><canvas id="chart-category"></canvas></div>
+        <p class="note" style="margin-top:12px;">
+          Coffee contribui com 39,5% do crescimento total, Tea com 27,9%. Juntas explicam mais de dois
+          terços de todo o incremento de receita do semestre.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== BLOCO 4 ===================== -->
+  <div class="block">
+    <div class="block-head"><span class="block-num">04</span><h2>Oportunidades</h2></div>
+    <p class="block-sub">Ações prioritárias, ordenadas pelo nível acionável das hipóteses que as sustentam</p>
+    <hr class="block-rule">
+
+    <div class="actions">
+      <div class="action-card">
+        <div class="action-rank">1</div>
+        <div class="action-body">
+          <h4>Reforçar capacidade de atendimento, não estratégias de ticket</h4>
+          <p>O crescimento vem 100% de volume de transações (+104%), com ticket médio estável (-0,2%). Investir em
+            upsell/preço tem baixo retorno agora — o gargalo real é capacidade de atender mais clientes
+            (caixa, fila, preparo).</p>
+          <div class="action-tags"><span class="tag">Alto acionável</span><span class="tag based">Baseado em H2</span></div>
+        </div>
+      </div>
+
+      <div class="action-card">
+        <div class="action-rank">2</div>
+        <div class="action-body">
+          <h4>Redimensionar equipe para o pico das 7h–10h — e reforçar fora do pico também</h4>
+          <p>O pico matinal concentra 45,8% da receita, mas cresce mais devagar (+97,7%) que o resto do dia — sinal de
+            possível limite de capacidade. Almoço e tarde crescem acima da média (+111% e +105%): vale reforçar a
+            manhã sem descuidar do restante do dia.</p>
+          <div class="action-tags"><span class="tag">Alto acionável</span><span class="tag based">Baseado em H7</span></div>
+        </div>
+      </div>
+
+      <div class="action-card">
+        <div class="action-rank">3</div>
+        <div class="action-body">
+          <h4>Blindar o estoque de Coffee, Tea e dos 9 produtos-âncora</h4>
+          <p>Coffee e Tea sozinhas respondem por 67% do crescimento; e 9 de 45 produtos já geram metade da receita
+            (grãos premium, Latte, Cappuccino, Dark Chocolate). Ruptura nesses itens tem impacto desproporcional —
+            priorizar reposição.</p>
+          <div class="action-tags"><span class="tag">Alto acionável</span><span class="tag based">Baseado em H4, H5, H10</span></div>
+        </div>
+      </div>
+
+      <div class="action-card medium">
+        <div class="action-rank">4</div>
+        <div class="action-body">
+          <h4>Revisar horário de funcionamento por loja</h4>
+          <p>O padrão de demanda é praticamente idêntico entre as três lojas — mas Hell's Kitchen abre mais cedo e
+            fecha mais tarde. Vale avaliar se o horário estendido gera retorno ou apenas custo operacional
+            adicional.</p>
+          <div class="action-tags"><span class="tag medium">Médio acionável</span><span class="tag based">Baseado em H8</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<footer>DASHBOARD GERADO A PARTIR DE COFFEE-SHOP-DATASET.CSV · 149.116 TRANSAÇÕES · JAN–JUN 2023</footer>
+
+<script>
+const DATA = {"overview": {"months": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"], "revenue": [81677.74, 76145.19, 98834.68, 118941.08, 156727.76, 166485.88], "index": [100.0, 93.2, 121.0, 145.6, 191.9, 203.8]}, "decomposition": {"months": ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun"], "txn": [17314, 16359, 21229, 25335, 33527, 35352], "ticket": [4.72, 4.65, 4.66, 4.69, 4.67, 4.71], "vol_growth_full": 104.2, "ticket_growth_full": -0.2}, "store": {"labels": ["Hell's Kitchen", "Lower Manhattan", "Astoria"], "growth_pct": [104.7, 105.1, 101.7]}, "hourband": {"labels": ["Pico manhã", "Almoço", "Tarde", "Baixa"], "contribution_pct": [44.0, 25.4, 22.5, 8.2]}, "category": {"labels": ["Coffee", "Tea", "Bakery", "Drinking Choc.", "Coffee beans", "Branded", "Loose Tea", "Flavours", "Pkg. Chocolate"], "contribution_pct": [39.5, 27.9, 11.5, 10.3, 5.5, 1.8, 1.7, 1.2, 0.6]}};
+
+const c = {
+  gold:'#d9af6e', goldBright:'#e8c383', green:'#7fb896', blue:'#84a8d6',
+  red:'#c9836f', olive:'#b0ac6e', ink:'#f1e8d8', inkSoft:'#9c9184', grid:'rgba(217,175,110,0.10)'
+};
+Chart.defaults.font.family = "'IBM Plex Mono', monospace";
+Chart.defaults.font.size = 10.5;
+Chart.defaults.color = c.inkSoft;
+Chart.defaults.borderColor = c.grid;
+
+function fmtBRL(v){ return 'R$ ' + Number(v).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+function noGridX(){ return { grid:{ display:false }, ticks:{ color: c.inkSoft } }; }
+function yStyle(extra){ return Object.assign({ grid:{ color: c.grid }, ticks:{ color: c.inkSoft } }, extra||{}); }
+
+new Chart(document.getElementById('chart-ov-rev'), {
+  type:'line',
+  data:{ labels: DATA.overview.months, datasets:[{
+    data: DATA.overview.revenue, borderColor: c.gold, backgroundColor:'rgba(217,175,110,0.10)',
+    fill:true, tension:.35, pointRadius:3, pointBackgroundColor: c.gold, borderWidth:2
+  }]},
+  options:{ plugins:{legend:{display:false}, tooltip:{callbacks:{label:x=>fmtBRL(x.raw)}}},
+    scales:{ x:noGridX(), y:yStyle({ ticks:{ color:c.inkSoft, callback:v=>fmtBRL(v) } }) } }
+});
+
+new Chart(document.getElementById('chart-dec-combo'), {
+  data:{ labels: DATA.decomposition.months, datasets:[
+    { type:'bar', data: DATA.decomposition.txn, backgroundColor:'rgba(132,168,214,0.55)', yAxisID:'y' },
+    { type:'line', data: DATA.decomposition.ticket, borderColor: c.red, backgroundColor: c.red, yAxisID:'y1', tension:.3, pointRadius:3, borderWidth:2 }
+  ]},
+  options:{ interaction:{mode:'index', intersect:false},
+    scales:{
+      x:noGridX(),
+      y:yStyle({ position:'left' }),
+      y1:{ position:'right', min:4, max:5, grid:{drawOnChartArea:false}, ticks:{ color:c.inkSoft } }
+    } }
+});
+
+new Chart(document.getElementById('chart-dec-bar'), {
+  type:'bar',
+  data:{ labels:['Volume','Ticket médio'], datasets:[{
+    data:[DATA.decomposition.vol_growth_full, DATA.decomposition.ticket_growth_full],
+    backgroundColor:[c.green, c.red]
+  }]},
+  options:{ indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:x=>x.raw+'%'}}},
+    scales:{ x:yStyle({ ticks:{ color:c.inkSoft, callback:v=>v+'%' } }), y:noGridX() } }
+});
+
+new Chart(document.getElementById('chart-store'), {
+  type:'bar',
+  data:{ labels: DATA.store.labels, datasets:[{
+    data: DATA.store.growth_pct, backgroundColor:[c.gold, c.blue, c.green]
+  }]},
+  options:{ plugins:{legend:{display:false}, tooltip:{callbacks:{label:x=>x.raw+'%'}}},
+    scales:{ x:noGridX(), y:yStyle({ suggestedMin:95, ticks:{ color:c.inkSoft, callback:v=>v+'%' } }) } }
+});
+
+new Chart(document.getElementById('chart-hour'), {
+  type:'bar',
+  data:{ labels: DATA.hourband.labels, datasets:[{
+    data: DATA.hourband.contribution_pct, backgroundColor:[c.red, c.olive, c.blue, 'rgba(156,145,132,0.4)']
+  }]},
+  options:{ indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:x=>x.raw+'%'}}},
+    scales:{ x:yStyle({ ticks:{ color:c.inkSoft, callback:v=>v+'%' } }), y:noGridX() } }
+});
+
+new Chart(document.getElementById('chart-category'), {
+  type:'bar',
+  data:{ labels: DATA.category.labels, datasets:[{
+    data: DATA.category.contribution_pct, backgroundColor: c.gold
+  }]},
+  options:{ indexAxis:'y', plugins:{legend:{display:false}, tooltip:{callbacks:{label:x=>x.raw+'%'}}},
+    scales:{ x:yStyle({ ticks:{ color:c.inkSoft, callback:v=>v+'%' } }), y:noGridX() } }
+});
+</script>
+
+</body>
+</html>
