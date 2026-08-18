@@ -138,7 +138,6 @@ as hipóteses e traduziu tudo em um artefato visual pronto para uso.
 ## Ferramentas utilizadas
 
 - **Claude AI (Anthropic)** — co-analista: condução do processo analítico ponta a ponta, da definição de hipóteses ao código do dashboard
-- **Python (pandas)** — limpeza e agregação dos dados
 - **HTML/CSS/JavaScript (Chart.js)** — dashboard interativo
 
 ## Estrutura do repositório
